@@ -1,1 +1,199 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+<head>
+  <style>
+    html, body, #map {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .plot, .plot svg {
+      position: absolute;
+    }
+    
+    .plot svg {
+      width: 60px;
+      height: 20px;
+      padding-right: 100px;
+      font: 10px sans-serif;
+    }
+    
+    .plot circle {
+      fill: black;
+      stroke: orange;
+      stroke-width: 1.5px;
+    }
+    .option {
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100px;
+      border: 3px solid green;
+      line-height: 60px;
+      font-size: 100px;
+      font-weight: bold;
+      width: 100px;
+      height: 100px;
+      color: white;
+      margin-left: 520px;
+    }
+    
+    .selector{
+    margin-top: -10px;
+    position: absolute;
+    
+    }
+    #selector{
+      margin-left: 500px;
+    }
+    #sliderValue{
+      margin-top: -25px;
+      margin-left: 270px;
+    }
+    #slide{
+      margin-top: -30px;
+      margin-left: -70px;
+      color: rgb(21, 20, 20);
+      font-weight: bold;
+    }
+    #data{
+      margin-top: -60px;
+      margin-left: 10px;
+      color: rgb(21, 20, 20);
+      font-weight: bold;
+    }
+    #slidertext{
+    margin-top: -35px;
+    margin-left: 150px;
+    color: rgb(6, 6, 6);
+    font-weight: bold;
+    }
+    .head{
+      background-color: #a0a0dc;
+    }
+    #map{
+      margin-top: -16px;
+    }    
 
+    </style>
+</head>
+<div class="heading"></div>
+<div class="head">
+<div class="option">
+  <p id="Assignment"></p>
+  <input name="updateButton" 
+         type="button" 
+         value="Update" 
+         onclick="updateData()" />
+</div>
+<div id="selector">
+         <input type="range" name="selector"text-align="center" value="50" oninput="sliderValue.innerText=this.value" id="slider" value="1" min="0" max="500" step="25" onclick="updateCircles(this.value)">
+         <p id="sliderValue">50</p>
+         <p id="slidertext">Number of Plots:</p>
+         <p id="slide">Slide here: </p>
+</div>
+<div id="data">
+  <p id="id">Course id:AC50002<br>
+    Programming Languages for Data Engineering<br>
+    Student id: 2495116<br>
+    Student Name: Midhun Omanakuttan
+    </p>
+
+</div>
+</div>
+<div id="map"></div>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDRJRTo3u0xpEO5vEj3PytWnKMysqjNs9o"></script>
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var map = new google.maps.Map(d3.select("#map").node(), {
+  zoom: 5.75,
+  controlSize: 20,
+
+          zoomControl:false,
+          gestureHandling: "none",
+          mapId: "8e0a97af9386fef",
+          keyboardShortcuts:false,
+          noClear:false,
+          center: { lat: 54.599, lng: -4.4360 } //Need uk center
+});
+afterclick();
+// Load the station data. When the data comes back, create an overlay.
+function afterclick(x){
+d3.json("http://34.78.46.186/Circles/Towns/"+x, function(error, data) {
+  if (error) throw error;
+
+  var overlay = new google.maps.OverlayView();
+
+  // Add the container when the overlay is added to the map.
+  overlay.onAdd = function() {
+    var layer = d3.select(this.getPanes().overlayLayer).append("div")
+        .attr("class", "plot");
+
+    // Draw each marker as a separate SVG element.
+    // We could use a single SVG, but what size would it have?
+    overlay.draw = function() {
+      var projection = this.getProjection(),
+          padding = 10;
+
+      var marker = layer.selectAll("svg")
+          .data(data) //change1
+          .each(transform) // update existing markers
+        .enter().append("svg")
+          .each(transform)
+          .attr("class", "marker");
+
+      // Add a circle.
+      marker.append("circle")
+          .attr("r" , function(d){ return (d.Population/25000) } )//circle radius was 4.5
+          .attr("class","draw")
+          .attr("cx", padding)
+          .attr("cy", padding);
+          
+
+      // Add a label.
+      marker.append("text")
+          .attr("x", padding + 7)
+          .attr("y", padding)
+          .attr("dy", ".31em")
+          .attr("class","label")
+          .text(function(d) { return d.Town; }); //change2
+
+      function transform(d) {
+        d = new google.maps.LatLng(d.lat, d.lng); //change3
+        d = projection.fromLatLngToDivPixel(d);
+        return d3.select(this)
+            .style("left", (d.x - padding) + "px")
+            .style("top", (d.y - padding) + "px");
+      }
+    };
+  };
+
+  // Bind our overlay to the map…
+  overlay.setMap(map);
+});
+}
+//d3.select("#selector").on("change", function(d){
+  //  selectedValue = this.value
+    //afterclick(selectedValue)
+//})
+</script>
+<script>
+function updateData()
+ {
+
+d3.selectAll('.label').remove();
+d3.selectAll('.draw').remove();
+afterclick(40);
+ }
+ function updateCircles(x)
+ {
+  d3.selectAll('.label').remove();
+  d3.selectAll('.draw').remove();
+  afterclick(x);
+ }
+</script>
